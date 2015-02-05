@@ -1,0 +1,184 @@
+<html>
+<head>
+	<title>Interpolation with rect example</title>
+</head>
+
+<script type="text/javascript">
+
+	function Vec2( x, y )
+	{
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	Vec2.prototype = {
+		//더하기
+		add: function( v )
+		{
+			return new Vec2(
+				this.x + v.x,
+				this.y + v.y
+			);
+		},
+
+		//빼기
+		sub: function( v )
+		{
+			return new Vec2(
+				this.x - v.x,
+				this.y - v.y
+			);
+		},
+
+		// 내적
+		dot: function( v )
+		{
+			return this.x * v.x + this.y * v.y;
+		},
+
+		// 스칼라 곱
+		scale: function( len )
+		{
+			this.x *= len;
+			this.y *= len;
+
+			return this;
+		},
+	};
+
+</script>
+	
+<script type="text/javascript">
+	
+	(function (){
+		
+		var canvas,
+			context,
+			imageData,
+			vA, vB, vC, vD, 
+			cA = [ 255, 0, 0 ],
+			cB = [ 0, 255, 0 ],
+			cC = [ 0, 0, 255 ],
+			cD = [ 0, 0, 0 ];
+
+		function init()
+		{
+			canvas = document.getElementById( "canvas" );
+			context = canvas.getContext( "2d" );
+
+			onResize();
+		};
+
+		function onResize(e)
+		{
+			canvas.width = 500//document.body.clientWidth;
+			canvas.height = 500//document.body.clientHeight;
+
+			imageData = context.createImageData( canvas.width, canvas.height );
+
+			var buf = imageData.data;
+
+			for( var i = 0, n = buf.length; i < n; i += 4 )
+			{
+				buf[i + 3] = 255;
+			};
+
+			vA = new Vec2( 0, 0 ),
+			vB = new Vec2( canvas.width, 0 ),
+			vC = new Vec2( 0, canvas.height ),
+			vD = new Vec2( canvas.width, canvas.height ),
+			vP = new Vec2( 100, 100 );
+
+			var c = barycentricCoord( vA, vB, vC, vD, vP );
+			console.log( c );
+
+			//draw();
+		};
+
+		function draw()
+		{
+			var buf = imageData.data,
+				w = canvas.width,
+				h = canvas.height,
+				x, y, index, coord;
+
+			for( var i = 0, n = buf.length; i < n; i += 4 )
+			{
+				index = i / 4;
+
+				vP.x = index % w;
+				vP.y = parseInt( index / w );
+
+				coord = barycentricCoord( vA, vB, vC, vD, vP );
+
+				buf[i + 0] = parseInt( cA[0] * coord[0] + cB[0] * coord[1] + cC[0] * coord[2] + cD[0] * coord[3] );
+				buf[i + 1] = parseInt( cA[1] * coord[0] + cB[1] * coord[1] + cC[1] * coord[2] + cD[1] * coord[3] );
+				buf[i + 2] = parseInt( cA[2] * coord[0] + cB[2] * coord[1] + cC[2] * coord[2] + cD[2] * coord[3] );
+			}
+
+			console.log( coord );
+
+			context.putImageData( imageData, 0, 0 );
+		};
+
+		function barycentricCoord( A, B, C, D, P )
+		{
+			var AB = B.sub( A ),
+				AC = C.sub( A ),
+				AD = D.sub( A ),
+				AP = P.sub( A );
+
+			console.log( AB, AC, AD, AP );
+
+			var a = AB.dot( AB ),
+				b = AB.dot( AC ),
+				c = AB.dot( AD ),
+				d = b,
+				e = AC.dot( AC ),
+				f = AC.dot( AD ),
+				g = c,
+				h = f,
+				i = AD.dot( AD ),
+				j = AP.dot( AB ),
+				k = AP.dot( AC ),
+				l = AP.dot( AD );
+
+			console.log( "a(%0.2f), b(%0.2f), c(%0.2f), d(%0.2f), e(%0.2f), f(%0.2f), g(%0.2f), h(%0.2f), i(%0.2f), j(%0.2f), k(%0.2f), l(%0.2f) ", a,b,c,d,e,f,g,h,i,j,k,l );
+
+			var detM = (a*e*i) + (b*f*g) + (c*d*h) - (c*e*g) - (b*d*i) - (a*f*h);
+
+			console.log( detM );
+
+			var s, t, u, v;
+
+			t = ( (j*e*i) + (b*f*l) + (c*k*h) - (c*e*l) - (b*k*i) - (j*f*h) ) / detM;
+			u = ( (a*k*i) + (j*f*g) + (c*d*l) - (c*k*g) - (j*d*i) - (a*f*l) ) / detM;
+			v = ( (a*e*l) + (b*k*g) + (j*d*h) - (j*e*g) - (b*d*l) - (a*k*h) ) / detM;
+
+			s = 1 - t - u - v;
+
+			return [ s, t, u, v ];
+		};
+ 
+		window.onload = init;
+		window.onresize = onResize;
+
+	})();
+
+</script>
+
+<style type="text/css">
+	body{
+		margin: 0;
+	}
+
+	canvas{
+		position: absolute;
+	}
+</style>
+<body>
+	<div class="wrapper">
+		<canvas id="canvas"></canvas>
+	</div>
+</body>
+</html>

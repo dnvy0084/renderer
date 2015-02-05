@@ -2,6 +2,81 @@
 <head>
 	<title>Custom pixel renderer example</title>
 </head>
+
+<script type="text/javascript">
+	
+</script>
+	
+<script type="text/javascript">
+	
+	(function (){
+		
+		var canvas,
+			context,
+			imageData;
+
+		function init()
+		{
+			canvas = document.getElementById( "canvas" );
+			context = canvas.getContext( "2d" );
+
+			onResize();
+		};
+
+		function onResize(e)
+		{
+			canvas.width = document.body.clientWidth;
+			canvas.height = document.body.clientHeight;
+
+			imageData = context.createImageData( canvas.width, canvas.height );
+
+			draw();
+		};
+
+		function draw()
+		{
+			var buf = imageData.data,
+				w = canvas.width,
+				h = canvas.height,
+				x, y, index;
+
+			for( var i = 0, n = buf.length; i < n; i += 4 )
+			{
+				index = i / 4;
+
+				x = index % w;
+				y = parseInt( index / w );
+
+				buf[i] = 255 - 255 * x / w;
+				buf[i + 1] = 255 * y / h;
+				buf[i + 2] = 255 * x / w;
+				buf[i + 3] = 255;
+			}
+
+			context.putImageData( imageData, 0, 0 );
+		};
+
+		function barycentricCoord( A, B, C, D, P )
+		{
+			
+		};
+ 
+		window.onload = init;
+		window.onresize = onResize;
+
+	})();
+
+</script>
+
+<style type="text/css">
+	body{
+		margin: 0;
+	}
+
+	canvas{
+		position: absolute;
+	}
+</style>
 <body>
 	<div class="wrapper">
 		<canvas id="canvas"></canvas>
