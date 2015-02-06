@@ -71,8 +71,8 @@
 
 		function onResize(e)
 		{
-			canvas.width = 500//document.body.clientWidth;
-			canvas.height = 500//document.body.clientHeight;
+			canvas.width = document.body.clientWidth;
+			canvas.height = document.body.clientHeight;
 
 			imageData = context.createImageData( canvas.width, canvas.height );
 
@@ -92,7 +92,7 @@
 			var c = barycentricCoord( vA, vB, vC, vD, vP );
 			console.log( c );
 
-			//draw();
+			draw();
 		};
 
 		function draw()
@@ -109,16 +109,48 @@
 				vP.x = index % w;
 				vP.y = parseInt( index / w );
 
-				coord = barycentricCoord( vA, vB, vC, vD, vP );
+				coord = barycentricCoord2( vA, vB, vC, vP );
 
-				buf[i + 0] = parseInt( cA[0] * coord[0] + cB[0] * coord[1] + cC[0] * coord[2] + cD[0] * coord[3] );
-				buf[i + 1] = parseInt( cA[1] * coord[0] + cB[1] * coord[1] + cC[1] * coord[2] + cD[1] * coord[3] );
-				buf[i + 2] = parseInt( cA[2] * coord[0] + cB[2] * coord[1] + cC[2] * coord[2] + cD[2] * coord[3] );
+				if( coord[0] < 0 || coord[0] > 1 ||
+					coord[1] < 0 || coord[1] > 1 ||
+					coord[2] < 0 || coord[2] > 1 )
+				{
+					buf[i + 0] = 0;
+					buf[i + 1] = 0;
+					buf[i + 2] = 0;
+
+					//continue;
+				}
+
+				buf[i + 0] = parseInt( cA[0] * coord[0] + cB[0] * coord[1] + cC[0] * coord[2] );
+				buf[i + 1] = parseInt( cA[1] * coord[0] + cB[1] * coord[1] + cC[1] * coord[2] );
+				buf[i + 2] = parseInt( cA[2] * coord[0] + cB[2] * coord[1] + cC[2] * coord[2] );
 			}
 
 			console.log( coord );
 
 			context.putImageData( imageData, 0, 0 );
+
+			drawPoint( vA, vB, vC, vD, 0.25, 0.25, 0.25, 0.25 );
+		};
+
+		function drawPoint( A, B, C, D, s, t, u, v )
+		{
+			var sA = A.scale( s ),
+				sB = B.scale( t ),
+				sC = C.scale( u ),
+				sD = D.scale( v );
+
+			var P = sA.add( sB ).add( sC ).add( sD );
+
+			context.save();
+
+				context.fillStyle = "#000000";
+				context.beginPath();
+				context.arc( P.x, P.y, 10, 0, 2 * Math.PI );
+				context.fill();
+
+			context.restore();
 		};
 
 		function barycentricCoord( A, B, C, D, P )
@@ -133,11 +165,11 @@
 			var a = AB.dot( AB ),
 				b = AB.dot( AC ),
 				c = AB.dot( AD ),
-				d = b,
+				d = AB.dot( AC ),
 				e = AC.dot( AC ),
 				f = AC.dot( AD ),
-				g = c,
-				h = f,
+				g = AB.dot( AD ),
+				h = AC.dot( AD ),
 				i = AD.dot( AD ),
 				j = AP.dot( AB ),
 				k = AP.dot( AC ),
@@ -159,6 +191,28 @@
 
 			return [ s, t, u, v ];
 		};
+
+		function barycentricCoord2( A, B, C, P )
+		{
+			var AB = B.sub( A ),
+				AC = C.sub( A ),
+				AP = P.sub( A );
+
+			var a = AB.dot( AB ),
+				b = AB.dot( AC ),
+				c = AB.dot( AC ),
+				d = AC.dot( AC ),
+				e = AP.dot( AB ),
+				f = AP.dot( AC );
+
+			var detM = (a*d) - (b*c);
+
+			var t = ( (e*d) - (b*f) ) / detM,
+				u = ( (a*f) - (e*c) ) / detM,
+				s = 1 - t - u;
+
+			return [s,t,u];
+		}
  
 		window.onload = init;
 		window.onresize = onResize;
